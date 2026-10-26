@@ -11,14 +11,13 @@ export function setupSwagger(
   const port = configService.get<number>('PORT') ?? 3000;
 
   const config = new DocumentBuilder()
-    .setTitle('NestIgnite — Backend Template')
+    .setTitle('food-service-api')
     .setDescription(
-      'Fast-start NestJS template with Prisma, PostgreSQL and Docker.\n\n' +
-        'This API exposes full **CRUD for users** as a baseline for your application.\n\n' +
+      'food-service-api built with NestJS, Prisma, PostgreSQL and Docker.\n\n' +
+        'This API exposes full **CRUD for users**.\n\n' +
         '**Stack:** NestJS · Prisma ORM · PostgreSQL · Docker\n\n' +
         '**Key features:** URI versioning (`/api/v1`), global validation pipe, ' +
-        'Prisma exception filter, Helmet security headers, configurable CORS.\n\n' +
-        '> Replace this description with your project-specific information before shipping to production.',
+        'Prisma exception filter, Helmet security headers, configurable CORS.',
     )
     .setVersion('1.3.2')
     .setContact(
@@ -27,8 +26,8 @@ export function setupSwagger(
       'contact@yourdomain.com',
     )
     .setExternalDoc(
-      'GitHub — NestIgnite',
-      'https://github.com/tulioanesio/NestIgnite',
+      'GitHub — food-service-api',
+      'https://github.com/tulioanesio/food-service-api',
     )
     .addTag('Users', 'CRUD operations for user management.')
     .addTag('Health', 'Liveness probe with database connectivity check.')
