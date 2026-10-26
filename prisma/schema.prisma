@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
   moduleFormat = "cjs"
 }
 
@@ -9,7 +9,142 @@ datasource db {
 }
 
 model User {
-  id    String     @id @default(uuid(7))
-  name  String
-  email String  @unique
+  id           String          @id @default(uuid(7))
+  name         String
+  email        String          @unique
+  passwordHash String
+  role         UserRole        @default(ATTENDANT)
+  createdAt    DateTime        @default(now())
+  payments     Payment[]
+  stockMoves   StockMovement[]
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  CASHIER
+  ATTENDANT
+  STOCK_MANAGER
+}
+
+model Customer {
+  id        String   @id @default(uuid(7))
+  name      String
+  cpf       String?  @unique
+  phone     String?
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
+model Product {
+  id         String          @id @default(uuid(7))
+  name       String
+  category   String
+  price      Decimal         @db.Decimal(10, 2)
+  createdAt  DateTime        @default(now())
+  stock      Stock?
+  orderItems OrderItem[]
+  stockMoves StockMovement[]
+
+  @@index([category])
+}
+
+model Stock {
+  id             String   @id @default(uuid(7))
+  productId      String   @unique
+  totalQuantity  Int      @default(0)
+  inputQuantity  Int      @default(0)
+  outputQuantity Int      @default(0)
+  updatedAt      DateTime @updatedAt
+  product        Product  @relation(fields: [productId], references: [id])
+}
+
+model StockMovement {
+  id        String            @id @default(uuid(7))
+  productId String
+  userId    String
+  type      StockMovementType
+  quantity  Int
+  reason    String?
+  createdAt DateTime          @default(now())
+  product   Product           @relation(fields: [productId], references: [id])
+  user      User              @relation(fields: [userId], references: [id])
+
+  @@index([productId, createdAt])
+}
+
+enum StockMovementType {
+  ENTRY
+  EXIT
+  LOSS
+  ADJUSTMENT
+}
+
+model Order {
+  id         String      @id @default(uuid(7))
+  customerId String?
+  total      Decimal     @db.Decimal(10, 2)
+  status     OrderStatus @default(OPEN)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  customer   Customer?   @relation(fields: [customerId], references: [id])
+  items      OrderItem[]
+  payments   Payment[]
+
+  @@index([customerId])
+  @@index([status])
+}
+
+enum OrderStatus {
+  OPEN
+  CONFIRMED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+model OrderItem {
+  id         String  @id @default(uuid(7))
+  orderId    String
+  productId  String
+  quantity   Int
+  unitPrice  Decimal @db.Decimal(10, 2)
+  totalPrice Decimal @db.Decimal(10, 2)
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product    Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id            String        @id @default(uuid(7))
+  orderId       String
+  receivedById  String
+  method        PaymentMethod
+  status        PaymentStatus @default(PENDING)
+  amount        Decimal       @db.Decimal(10, 2)
+  transactionId String?
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  receivedBy    User          @relation(fields: [receivedById], references: [id])
+
+  @@index([orderId])
+}
+
+enum PaymentMethod {
+  CASH
+  PIX
+  CREDIT_CARD
+  DEBIT_CARD
+  MEAL_VOUCHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+  CANCELLED
 }
