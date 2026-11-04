@@ -60,11 +60,11 @@ O sistema deve permitir que um funcionario entre utilizando suas credenciais e d
 
 **RF-02 - Controlar permissoes**
 
-O sistema deve controlar o acesso conforme o perfil do funcionario: administrador, gerente, caixa/atendente, estoquista ou cozinha.
+O sistema deve controlar o acesso conforme o perfil do funcionario: administrador, gerente, caixa/atendente, estoquista ou cozinha. O acesso sem autenticacao deve retornar `401`; o acesso autenticado sem permissao deve retornar `403`.
 
 **RF-03 - Gerenciar funcionarios**
 
-O administrador deve poder cadastrar, consultar, atualizar e desativar funcionarios.
+O administrador deve poder cadastrar, consultar e desativar funcionarios. Cada funcionario pode consultar e atualizar somente o proprio perfil. A listagem geral deve ser restrita a administradores e gerentes.
 
 **RF-04 - Proteger credenciais**
 
@@ -210,7 +210,7 @@ A aplicacao deve iniciar de forma reproduzivel usando Docker e variaveis de ambi
 
 **RNF-07 - Manutenibilidade**
 
-O codigo deve seguir a organizacao do NestJS, possuir validacao de entrada, tipagem, documentacao da API e separacao entre controller, service e persistencia.
+O codigo deve seguir a organizacao do NestJS, possuir validacao de entrada, tipagem, documentacao da API e separacao entre controllers, casos de uso e persistencia.
 
 **RNF-08 - Testabilidade**
 
