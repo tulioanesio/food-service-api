@@ -187,7 +187,82 @@ jobs:
       )
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Render deploy hook
+      - name: Start and wait for Render deploy
         env:
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-        run: curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK_URL"
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_SERVICE_ID }}
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_URL: ${{ vars.RENDER_SERVICE_URL }}
+        run: |
+          set -euo pipefail
+
+          echo "🚀 Acionando a API do Render para o serviço ${RENDER_SERVICE_ID}..."
+
+          if ! CREATE_RESPONSE=$(curl --fail-with-body --silent --show-error \
+            --request POST "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys" \
+            --header "Authorization: Bearer ${RENDER_API_KEY}" \
+            --header "Accept: application/json"); then
+            echo "❌ Erro ao acionar deploy: Render rejeitou a requisição."
+            exit 1
+          fi
+
+          DEPLOY_ID=$(echo "${CREATE_RESPONSE}" | jq -r '.id // empty')
+
+          if [ -z "${DEPLOY_ID}" ]; then
+            echo "❌ Erro ao acionar deploy. Resposta: ${CREATE_RESPONSE}"
+            exit 1
+          fi
+
+          echo "RENDER_DEPLOY_ID=${DEPLOY_ID}" >> "${GITHUB_ENV}"
+          echo "✅ Deploy acionado (ID: ${DEPLOY_ID}). Aguardando finalização do servidor do Render..."
+
+          # Loop robusto limitando a 40 tentativas (aprox 10 minutos)
+          for attempt in $(seq 1 40); do
+            STATUS_RESPONSE=$(curl --fail-with-body --silent --show-error \
+              --request GET "https://api.render.com/v1/services/${RENDER_SERVICE_ID}/deploys/${DEPLOY_ID}" \
+              --header "Authorization: Bearer ${RENDER_API_KEY}" \
+              --header "Accept: application/json")
+            STATUS=$(echo "${STATUS_RESPONSE}" | jq -r '.status // empty')
+
+            echo "Status atual no Render (${attempt}/40): ${STATUS}"
+
+            case "${STATUS}" in
+              live)
+                echo "RENDER_DEPLOY_STATUS=live" >> "${GITHUB_ENV}"
+                echo "🎉 Deploy online com sucesso!"
+                exit 0
+                ;;
+              created|queued|build_in_progress|update_in_progress|deploy_in_progress)
+                sleep 15
+                ;;
+              build_failed|update_failed|deactivated|canceled|cancelled|failed)
+                echo "RENDER_DEPLOY_STATUS=${STATUS}" >> "${GITHUB_ENV}"
+                echo "❌ O deploy falhou no Render com o status: ${STATUS}"
+                exit 1
+                ;;
+              *)
+                echo "❌ Status desconhecido retornado pelo Render: ${STATUS}"
+                exit 1
+                ;;
+            esac
+          done
+
+          echo "❌ O deploy atingiu o tempo limite de 10 minutos."
+          echo "RENDER_DEPLOY_STATUS=timeout" >> "${GITHUB_ENV}"
+          exit 1
+
+      - name: Deploy Summary (Success)
+        if: success()
+        env:
+          RENDER_SERVICE_URL: ${{ vars.RENDER_SERVICE_URL }}
+        run: |
+          echo "### ✅ Deploy Concluído com Sucesso!" >> $GITHUB_STEP_SUMMARY
+          echo "O Render compilou e subiu a aplicação sem erros." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**🔗 Acessar o Ambiente:** [${RENDER_SERVICE_URL}](${RENDER_SERVICE_URL})" >> $GITHUB_STEP_SUMMARY
+
+      - name: Deploy Summary (Failure)
+        if: failure()
+        run: |
+          echo "### ❌ Falha no Deploy!" >> $GITHUB_STEP_SUMMARY
+          echo "O Render tentou compilar a aplicação, mas ocorreu um erro no servidor." >> $GITHUB_STEP_SUMMARY
+          echo "Acesse o painel do Render para ver os logs e entender o que quebrou o Build." >> $GITHUB_STEP_SUMMARY
