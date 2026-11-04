@@ -77,7 +77,14 @@ jobs:
   sonar:
     name: SonarQube Scan and Quality Gate
     needs: quality
-    if: github.event_name != 'workflow_dispatch' || inputs.enable_sonar_scan == true
+    if: |
+      always() &&
+      needs.quality.result == 'success' &&
+      (
+        github.event_name != 'workflow_dispatch' ||
+        inputs.enable_sonar_scan == true ||
+        github.event.inputs.enable_sonar_scan == 'true'
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -105,7 +112,7 @@ jobs:
             -Dsonar.tests=src
             -Dsonar.test.inclusions=src/**/*.spec.ts
             -Dsonar.exclusions=src/generated/**,dist/**,coverage/**,src/**/*.spec.ts
-              -Dsonar.coverage.exclusions=src/generated/**,src/main.ts,src/config/**,src/swagger/**,src/**/*.module.ts,src/**/*.dto.ts,src/**/*.decorator.ts,src/health/**,src/prisma/prisma.service.ts
+            -Dsonar.coverage.exclusions=src/generated/**,src/main.ts,src/config/**,src/swagger/**,src/**/*.module.ts,src/**/*.dto.ts,src/**/*.decorator.ts,src/health/**,src/prisma/prisma.service.ts
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
       - name: Check SonarQube quality gate
