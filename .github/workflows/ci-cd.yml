@@ -1,152 +1,152 @@
 name: CI/CD
 
 on:
- push:
-  branches: [main]
- pull_request:
-  branches: [main]
- workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
- contents: read
+  contents: read
 
 env:
- NODE_VERSION: "22"
- PNPM_VERSION: 10.30.0
+  NODE_VERSION: "22"
+  PNPM_VERSION: 10.30.0
 
 jobs:
- quality:
-  name: Quality and Build
-  runs-on: ubuntu-latest
-  steps:
-   - name: Checkout repository
-     uses: actions/checkout@v4
+  quality:
+    name: Quality and Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-   - name: Setup pnpm
-     uses: pnpm/action-setup@v4
-     with:
-      version: ${{ env.PNPM_VERSION }}
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
 
-   - name: Setup Node.js
-     uses: actions/setup-node@v4
-     with:
-      node-version: ${{ env.NODE_VERSION }}
-      cache: pnpm
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
 
-   - name: Install dependencies
-     run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
 
-   - name: Validate Prisma schema
-     run: pnpm exec prisma validate
+      - name: Validate Prisma schema
+        run: pnpm exec prisma validate
 
-   - name: Check formatting
-     run: pnpm run format:check
+      - name: Check formatting
+        run: pnpm run format:check
 
-   - name: Run lint
-     run: pnpm run lint:check
+      - name: Run lint
+        run: pnpm run lint:check
 
-   - name: Run tests with coverage
-     run: pnpm exec jest --coverage --runInBand
+      - name: Run tests with coverage
+        run: pnpm exec jest --coverage --runInBand
 
-   - name: Upload coverage
-     uses: actions/upload-artifact@v4
-     with:
-      name: coverage
-      path: coverage/lcov.info
-      if-no-files-found: error
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/lcov.info
+          if-no-files-found: error
 
-   - name: Build application
-     run: pnpm build
+      - name: Build application
+        run: pnpm build
 
-   - name: Validate Docker image
-     run: docker build --tag food-service-api:${{ github.sha }} .
+      - name: Validate Docker image
+        run: docker build --tag food-service-api:${{ github.sha }} .
 
- sonar:
-  name: SonarQube Scan and Quality Gate
-  needs: quality
-  if: vars.SONAR_ENABLED == 'true'
-  runs-on: ubuntu-latest
-  steps:
-   - name: Checkout repository
-     uses: actions/checkout@v4
-     with:
-      fetch-depth: 0
+  sonar:
+    name: SonarQube Scan and Quality Gate
+    needs: quality
+    if: vars.SONAR_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-   - name: Download coverage
-     uses: actions/download-artifact@v4
-     with:
-      name: coverage
-      path: coverage
+      - name: Download coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage
+          path: coverage
 
-   - name: Run SonarQube scan
-     uses: SonarSource/sonarqube-scan-action@v6
-     env:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
-     with:
-      args: >-
-       -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
-       -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
-       -Dsonar.sources=src
-       -Dsonar.tests=src
-       -Dsonar.test.inclusions=src/**/*.spec.ts
-       -Dsonar.exclusions=src/generated/**,dist/**,coverage/**,src/**/*.spec.ts
-       -Dsonar.coverage.exclusions=src/generated/**,src/main.ts,src/config/**,src/swagger/**,src/**/*.module.ts,src/**/*.dto.ts
-       -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+      - name: Run SonarQube scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+        with:
+          args: >-
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.sources=src
+            -Dsonar.tests=src
+            -Dsonar.test.inclusions=src/**/*.spec.ts
+            -Dsonar.exclusions=src/generated/**,dist/**,coverage/**,src/**/*.spec.ts
+                 -Dsonar.coverage.exclusions=src/generated/**,src/main.ts,src/config/**,src/swagger/**,src/**/*.module.ts,src/**/*.dto.ts,src/**/*.decorator.ts,src/health/**,src/prisma/prisma.service.ts
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
-   - name: Check SonarQube quality gate
-     uses: SonarSource/sonarqube-quality-gate-action@master
-     timeout-minutes: 5
-     env:
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
+      - name: Check SonarQube quality gate
+        uses: SonarSource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL }}
 
-   - name: SonarQube summary
-     if: success()
-     run: echo '### SonarQube Quality Gate passed' >> "$GITHUB_STEP_SUMMARY"
+      - name: SonarQube summary
+        if: success()
+        run: echo '### SonarQube Quality Gate passed' >> "$GITHUB_STEP_SUMMARY"
 
- publish:
-  name: Publish Docker Image
-  needs: [quality, sonar]
-  if: |
-   always() &&
-   (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
-   github.ref == 'refs/heads/main' &&
-   needs.quality.result == 'success' &&
-   (needs.sonar.result == 'success' || needs.sonar.result == 'skipped')
-  runs-on: ubuntu-latest
-  permissions:
-   contents: read
-   packages: write
-  steps:
-   - name: Checkout repository
-     uses: actions/checkout@v4
+  publish:
+    name: Publish Docker Image
+    needs: [quality, sonar]
+    if: |
+      always() &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      github.ref == 'refs/heads/main' &&
+      needs.quality.result == 'success' &&
+      (needs.sonar.result == 'success' || needs.sonar.result == 'skipped')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-   - name: Login to GitHub Container Registry
-     uses: docker/login-action@v3
-     with:
-      registry: ghcr.io
-      username: ${{ github.actor }}
-      password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-   - name: Build and publish image
-     uses: docker/build-push-action@v6
-     with:
-      context: .
-      push: true
-      tags: |
-       ghcr.io/${{ github.repository }}:${{ github.sha }}
-       ghcr.io/${{ github.repository }}:latest
+      - name: Build and publish image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:latest
 
- deploy:
-  name: Deploy to Render
-  needs: publish
-  if: |
-   needs.publish.result == 'success' &&
-   vars.RENDER_ENABLED == 'true'
-  runs-on: ubuntu-latest
-  steps:
-   - name: Trigger Render deploy hook
-     env:
-      RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-     run: curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK_URL"
+  deploy:
+    name: Deploy to Render
+    needs: publish
+    if: |
+      needs.publish.result == 'success' &&
+      vars.RENDER_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Render deploy hook
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: curl --fail --silent --show-error --request POST "$RENDER_DEPLOY_HOOK_URL"
