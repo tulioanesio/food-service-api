@@ -6,6 +6,17 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      enable_sonar_scan:
+        description: Enable SonarQube scan
+        required: false
+        type: boolean
+        default: false
+      enable_deploy_option:
+        description: Enable deploy to Render
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -21,6 +32,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -64,12 +77,13 @@ jobs:
   sonar:
     name: SonarQube Scan and Quality Gate
     needs: quality
-    if: vars.SONAR_ENABLED == 'true'
+    if: github.event_name != 'workflow_dispatch' || inputs.enable_sonar_scan == true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.ref }}
           fetch-depth: 0
 
       - name: Download coverage
@@ -91,7 +105,7 @@ jobs:
             -Dsonar.tests=src
             -Dsonar.test.inclusions=src/**/*.spec.ts
             -Dsonar.exclusions=src/generated/**,dist/**,coverage/**,src/**/*.spec.ts
-                 -Dsonar.coverage.exclusions=src/generated/**,src/main.ts,src/config/**,src/swagger/**,src/**/*.module.ts,src/**/*.dto.ts,src/**/*.decorator.ts,src/health/**,src/prisma/prisma.service.ts
+                -Dsonar.coverage.exclusions=src/generated/**,src/main.ts,src/config/**,src/swagger/**,src/**/*.module.ts,src/**/*.dto.ts,src/**/*.decorator.ts,src/health/**,src/prisma/prisma.service.ts
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
       - name: Check SonarQube quality gate
@@ -110,10 +124,12 @@ jobs:
     needs: [quality, sonar]
     if: |
       always() &&
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
-      github.ref == 'refs/heads/main' &&
       needs.quality.result == 'success' &&
-      (needs.sonar.result == 'success' || needs.sonar.result == 'skipped')
+      (needs.sonar.result == 'success' || needs.sonar.result == 'skipped') &&
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' && inputs.enable_deploy_option == true)
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -121,6 +137,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -143,7 +161,10 @@ jobs:
     needs: publish
     if: |
       needs.publish.result == 'success' &&
-      vars.RENDER_ENABLED == 'true'
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' && inputs.enable_deploy_option == true)
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Render deploy hook
