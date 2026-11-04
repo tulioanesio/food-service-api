@@ -10,6 +10,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
+import { ProductsModule } from './modules/products/products.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { RolesGuard } from './modules/auth/guards/roles.guard';
     PrismaModule,
     AuthModule,
     UsersModule,
+    ProductsModule,
     HealthModule,
   ],
   providers: [

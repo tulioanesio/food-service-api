@@ -88,19 +88,19 @@ O atendente autorizado deve poder atualizar os dados de um cliente.
 
 **RF-08 - Cadastrar produto**
 
-O usuario autorizado deve poder cadastrar produto com nome, categoria, preco e situacao de disponibilidade.
+Administrador ou gerente deve poder cadastrar produto com nome, categoria, preco e situacao de disponibilidade.
 
 **RF-09 - Consultar produtos**
 
-O sistema deve listar produtos, permitir busca por nome ou categoria e informar se o produto esta disponivel.
+Usuarios autenticados devem poder listar produtos ativos, buscar por nome ou categoria e consultar sua disponibilidade.
 
 **RF-10 - Atualizar produto**
 
-O usuario autorizado deve poder atualizar dados e preco de um produto.
+Administrador ou gerente deve poder atualizar nome, categoria e preco de um produto.
 
 **RF-11 - Desativar produto**
 
-O sistema deve permitir desativar um produto sem apagar seu historico de vendas.
+Administrador ou gerente deve poder desativar um produto por exclusao logica, sem apagar seu historico de vendas. Produtos desativados nao devem aparecer em novas consultas operacionais nem ser incluidos em novos pedidos.
 
 ### Estoque
 
