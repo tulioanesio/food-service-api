@@ -8,6 +8,8 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
+type ErrorResponseBody = Record<string, unknown>;
+
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
@@ -33,25 +35,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
         exception.stack,
       );
     } else {
-      this.logger.error(`HTTP Status: ${status} Error: ${JSON.stringify(errorResponse)}`);
+      this.logger.error(
+        `HTTP Status: ${status} Error: ${JSON.stringify(errorResponse)}`,
+      );
     }
 
-    const message =
-      typeof errorResponse === 'object' && errorResponse !== null && 'message' in errorResponse
-        ? (errorResponse as any).message
-        : errorResponse;
-        
-    const errorType = 
-      typeof errorResponse === 'object' && errorResponse !== null && 'error' in errorResponse
-        ? (errorResponse as any).error
-        : 'Error';
+    const responseBody: ErrorResponseBody | undefined =
+      typeof errorResponse === 'object' && errorResponse !== null
+        ? (errorResponse as ErrorResponseBody)
+        : undefined;
+    const message = responseBody?.message ?? errorResponse;
+    const errorType =
+      typeof responseBody?.error === 'string' ? responseBody.error : 'Error';
 
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
       message: Array.isArray(message) ? message : [message],
-      error: errorType, 
+      error: errorType,
     });
   }
 }

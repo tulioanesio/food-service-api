@@ -97,4 +97,4 @@ async function bootstrap() {
     `📍 Health check is available at: http://localhost:${port}/v${defaultVersion}/health`,
   );
 }
-bootstrap();
+void bootstrap();

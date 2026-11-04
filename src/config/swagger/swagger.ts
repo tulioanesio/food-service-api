@@ -192,6 +192,6 @@ export function setupSwagger(
     apiReference({
       theme: 'kepler',
       content: document,
-    } as any),
+    }),
   );
 }
