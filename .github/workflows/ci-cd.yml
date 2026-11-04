@@ -22,7 +22,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: "22"
+  NODE_VERSION: '22'
   PNPM_VERSION: 10.30.0
 
 jobs:
@@ -105,7 +105,7 @@ jobs:
             -Dsonar.tests=src
             -Dsonar.test.inclusions=src/**/*.spec.ts
             -Dsonar.exclusions=src/generated/**,dist/**,coverage/**,src/**/*.spec.ts
-                -Dsonar.coverage.exclusions=src/generated/**,src/main.ts,src/config/**,src/swagger/**,src/**/*.module.ts,src/**/*.dto.ts,src/**/*.decorator.ts,src/health/**,src/prisma/prisma.service.ts
+              -Dsonar.coverage.exclusions=src/generated/**,src/main.ts,src/config/**,src/swagger/**,src/**/*.module.ts,src/**/*.dto.ts,src/**/*.decorator.ts,src/health/**,src/prisma/prisma.service.ts
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
       - name: Check SonarQube quality gate
@@ -128,7 +128,13 @@ jobs:
       (needs.sonar.result == 'success' || needs.sonar.result == 'skipped') &&
       (
         (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-        (github.event_name == 'workflow_dispatch' && inputs.enable_deploy_option == true)
+        (
+          github.event_name == 'workflow_dispatch' &&
+          (
+            inputs.enable_deploy_option == true ||
+            github.event.inputs.enable_deploy_option == 'true'
+          )
+        )
       )
     runs-on: ubuntu-latest
     permissions:
@@ -160,10 +166,17 @@ jobs:
     name: Deploy to Render
     needs: publish
     if: |
+      always() &&
       needs.publish.result == 'success' &&
       (
         (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-        (github.event_name == 'workflow_dispatch' && inputs.enable_deploy_option == true)
+        (
+          github.event_name == 'workflow_dispatch' &&
+          (
+            inputs.enable_deploy_option == true ||
+            github.event.inputs.enable_deploy_option == 'true'
+          )
+        )
       )
     runs-on: ubuntu-latest
     steps:
