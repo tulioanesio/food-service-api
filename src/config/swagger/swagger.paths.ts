@@ -8,9 +8,9 @@
 // Routes are aligned with the NestJS controller prefixes:
 //   Global prefix : /api
 //   URI version   : /v1   (defaultVersion = '1')
-//   Controller    : @Controller('user')
+//   Controller    : @Controller('users')
 //
-// ➜ effective base path: /api/v1/user
+// ➜ effective base path: /api/v1/users
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
@@ -20,7 +20,10 @@ const uuid = '01965a2b-3c4d-7e8f-9a0b-1c2d3e4f5a6b';
 const userExample = {
   id: uuid,
   name: 'John Doe',
+  login: 'john.doe',
   email: 'john@example.com',
+  role: 'ATTENDANT',
+  isActive: true,
   createdAt: '2025-01-15T10:30:00.000Z',
   updatedAt: '2025-01-15T10:30:00.000Z',
 };
@@ -65,7 +68,11 @@ const pageParams = [
 
 const ref = (name: string) => ({ $ref: `#/components/schemas/${name}` });
 
-const errorResponse = (code: number, description: string, message?: string | string[]) => ({
+const errorResponse = (
+  code: number,
+  description: string,
+  message?: string | string[],
+) => ({
   description,
   content: {
     'application/json': {
@@ -92,15 +99,13 @@ function httpErrorName(code: number): string {
 }
 
 export const customPathDocs = {
-
-  '/api/v1/user': {
-
+  '/api/v1/users': {
     get: {
       tags: ['Users'],
       summary: 'List all users',
       description:
-        'Returns a paginated list of all registered users. ' +
-        'Use `page` and `limit` query parameters to control the result window.',
+        'Returns active users. This endpoint requires administrator or manager access.',
+      security: [{ bearerAuth: [] }],
       parameters: pageParams,
       responses: {
         '200': {
@@ -141,9 +146,7 @@ export const customPathDocs = {
       tags: ['Users'],
       summary: 'Create a new user',
       description:
-        'Registers a new user in the system. ' +
-        'The `email` field must be unique — attempting to register a duplicate ' +
-        'e-mail returns `409 Conflict`.',
+        'Registers the first user publicly for bootstrap. Subsequent users require administrator access.',
       requestBody: {
         required: true,
         content: {
@@ -151,14 +154,17 @@ export const customPathDocs = {
             schema: ref('CreateUserDto'),
             example: {
               name: 'John Doe',
+              login: 'john.doe',
               email: 'john@example.com',
+              password: 'StrongPass123!',
             },
           },
         },
       },
       responses: {
         '201': {
-          description: 'User created successfully. Returns the persisted entity.',
+          description:
+            'User created successfully. Returns the persisted entity.',
           content: {
             'application/json': {
               schema: ref('User'),
@@ -166,22 +172,22 @@ export const customPathDocs = {
             },
           },
         },
-        '400': errorResponse(
-          400,
-          'Validation failed.',
-          ['name should not be empty', 'email must be an email'],
-        ),
+        '400': errorResponse(400, 'Validation failed.', [
+          'name should not be empty',
+          'email must be an email',
+        ]),
         '409': errorResponse(409, 'E-mail address is already in use.'),
       },
     },
   },
 
-  '/api/v1/user/{id}': {
-
+  '/api/v1/users/{id}': {
     get: {
       tags: ['Users'],
       summary: 'Get user by ID',
-      description: 'Retrieves a single user by their unique UUID.',
+      description:
+        'Retrieves an active user. Users can access their own profile; managers and administrators can access any profile.',
+      security: [{ bearerAuth: [] }],
       parameters: [pathParam('id', 'UUID of the user to retrieve.')],
       responses: {
         '200': {
@@ -201,8 +207,8 @@ export const customPathDocs = {
       tags: ['Users'],
       summary: 'Update a user',
       description:
-        'Partially updates an existing user (`PartialType` — all fields optional). ' +
-        'Only provided fields are updated; omitted fields remain unchanged.',
+        'Updates the authenticated user profile. Only the owner can edit personal data.',
+      security: [{ bearerAuth: [] }],
       parameters: [pathParam('id', 'UUID of the user to update.')],
       requestBody: {
         required: true,
@@ -229,11 +235,9 @@ export const customPathDocs = {
             },
           },
         },
-        '400': errorResponse(
-          400,
-          'Validation failed.',
-          ['email must be an email'],
-        ),
+        '400': errorResponse(400, 'Validation failed.', [
+          'email must be an email',
+        ]),
         '404': errorResponse(404, 'User not found.'),
         '409': errorResponse(409, 'E-mail address is already in use.'),
       },
@@ -243,8 +247,8 @@ export const customPathDocs = {
       tags: ['Users'],
       summary: 'Delete a user',
       description:
-        'Permanently removes a user from the system. ' +
-        'Returns the deleted entity so the caller can confirm what was removed.',
+        'Soft-deletes a user. The record is permanently purged by a daily job after 30 days.',
+      security: [{ bearerAuth: [] }],
       parameters: [pathParam('id', 'UUID of the user to delete.')],
       responses: {
         '200': {
@@ -262,7 +266,6 @@ export const customPathDocs = {
   },
 
   '/api/v1/health': {
-
     get: {
       tags: ['Health'],
       summary: 'Health check',

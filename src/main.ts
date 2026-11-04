@@ -5,7 +5,7 @@ import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import helmet from 'helmet';
 import { AllExceptionsFilter } from './common/filters/http-exception/http-exception.filter';
 import { PrismaClientExceptionFilter } from './common/filters/prisma-exception/prisma-exception.filter';
-import { setupSwagger } from './swagger/swagger';
+import { setupSwagger } from './config/swagger/swagger';
 
 const STARTUP_BANNER = `
 \x1b[31m

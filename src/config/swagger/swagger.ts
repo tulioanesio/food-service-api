@@ -20,6 +20,7 @@ export function setupSwagger(
         'Prisma exception filter, Helmet security headers, configurable CORS.',
     )
     .setVersion('1.3.2')
+    .addBearerAuth()
     .setContact(
       'tulioanesio',
       'https://github.com/tulioanesio',
@@ -49,7 +50,7 @@ export function setupSwagger(
       User: {
         type: 'object',
         description: 'Persisted user entity returned by the API.',
-        required: ['id', 'name', 'email'],
+        required: ['id', 'name', 'login', 'role', 'isActive'],
         properties: {
           id: {
             type: 'string',
@@ -62,11 +63,25 @@ export function setupSwagger(
             example: 'John Doe',
             description: "User's full name.",
           },
+          login: {
+            type: 'string',
+            example: 'john.doe',
+            description: 'Unique login used for authentication.',
+          },
           email: {
             type: 'string',
             format: 'email',
             example: 'john@example.com',
             description: 'Unique e-mail address.',
+          },
+          role: {
+            type: 'string',
+            enum: ['ADMIN', 'MANAGER', 'CASHIER', 'ATTENDANT', 'STOCK_MANAGER'],
+            example: 'ATTENDANT',
+          },
+          isActive: {
+            type: 'boolean',
+            example: true,
           },
           createdAt: {
             type: 'string',
@@ -86,7 +101,7 @@ export function setupSwagger(
       CreateUserDto: {
         type: 'object',
         description: 'Payload required to register a new user.',
-        required: ['name', 'email'],
+        required: ['name', 'login', 'password'],
         properties: {
           name: {
             type: 'string',
@@ -98,6 +113,20 @@ export function setupSwagger(
             format: 'email',
             example: 'john@example.com',
             description: 'Valid and unique e-mail address.',
+          },
+          login: {
+            type: 'string',
+            example: 'john.doe',
+          },
+          password: {
+            type: 'string',
+            format: 'password',
+            example: 'StrongPass123!',
+          },
+          role: {
+            type: 'string',
+            enum: ['ADMIN', 'MANAGER', 'CASHIER', 'ATTENDANT', 'STOCK_MANAGER'],
+            example: 'ATTENDANT',
           },
         },
       },
@@ -117,6 +146,11 @@ export function setupSwagger(
             format: 'email',
             example: 'jane@example.com',
             description: 'Updated e-mail address.',
+          },
+          password: {
+            type: 'string',
+            format: 'password',
+            example: 'NewStrongPass123!',
           },
         },
       },
@@ -140,7 +174,8 @@ export function setupSwagger(
                 example: ['name should not be empty', 'email must be an email'],
               },
             ],
-            description: 'Human-readable error message or validation errors array.',
+            description:
+              'Human-readable error message or validation errors array.',
           },
           error: {
             type: 'string',
