@@ -11,10 +11,14 @@ datasource db {
 model User {
   id           String          @id @default(uuid(7))
   name         String
-  email        String          @unique
+  login        String          @unique
+  email        String?         @unique
   passwordHash String
   role         UserRole        @default(ATTENDANT)
+  isActive     Boolean         @default(true)
   createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  deletedAt    DateTime?
   payments     Payment[]
   stockMoves   StockMovement[]
 }
@@ -25,6 +29,7 @@ enum UserRole {
   CASHIER
   ATTENDANT
   STOCK_MANAGER
+  KITCHEN
 }
 
 model Customer {
@@ -62,13 +67,13 @@ model Stock {
 model StockMovement {
   id        String            @id @default(uuid(7))
   productId String
-  userId    String
+  userId    String?
   type      StockMovementType
   quantity  Int
   reason    String?
   createdAt DateTime          @default(now())
   product   Product           @relation(fields: [productId], references: [id])
-  user      User              @relation(fields: [userId], references: [id])
+  user      User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([productId, createdAt])
 }
@@ -121,7 +126,7 @@ model OrderItem {
 model Payment {
   id            String        @id @default(uuid(7))
   orderId       String
-  receivedById  String
+  receivedById  String?
   method        PaymentMethod
   status        PaymentStatus @default(PENDING)
   amount        Decimal       @db.Decimal(10, 2)
@@ -129,7 +134,7 @@ model Payment {
   paidAt        DateTime?
   createdAt     DateTime      @default(now())
   order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  receivedBy    User          @relation(fields: [receivedById], references: [id])
+  receivedBy    User?         @relation(fields: [receivedById], references: [id], onDelete: SetNull)
 
   @@index([orderId])
 }
