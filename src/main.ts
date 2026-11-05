@@ -29,7 +29,7 @@ async function bootstrap() {
 
   console.log('[DEBUG] Criando aplicação NestJS');
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   console.log('[DEBUG] Aplicação NestJS criada');
   const defaultVersion = '1';
