@@ -1,3 +1,4 @@
+import { OrdersModule } from './modules/orders/orders.module';
 import { StockModule } from './modules/stock/stock.module';
 import { Module } from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -41,6 +42,7 @@ import { ProductsModule } from './modules/products/products.module';
     UsersModule,
     ProductsModule,
     StockModule,
+    OrdersModule,
     HealthModule,
   ],
   providers: [
