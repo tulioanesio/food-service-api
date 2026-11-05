@@ -28,12 +28,14 @@ export type AggregateStock = {
 
 export type StockAvgAggregateOutputType = {
   totalQuantity: number | null
+  minimumQuantity: number | null
   inputQuantity: number | null
   outputQuantity: number | null
 }
 
 export type StockSumAggregateOutputType = {
   totalQuantity: number | null
+  minimumQuantity: number | null
   inputQuantity: number | null
   outputQuantity: number | null
 }
@@ -42,6 +44,7 @@ export type StockMinAggregateOutputType = {
   id: string | null
   productId: string | null
   totalQuantity: number | null
+  minimumQuantity: number | null
   inputQuantity: number | null
   outputQuantity: number | null
   updatedAt: Date | null
@@ -51,6 +54,7 @@ export type StockMaxAggregateOutputType = {
   id: string | null
   productId: string | null
   totalQuantity: number | null
+  minimumQuantity: number | null
   inputQuantity: number | null
   outputQuantity: number | null
   updatedAt: Date | null
@@ -60,6 +64,7 @@ export type StockCountAggregateOutputType = {
   id: number
   productId: number
   totalQuantity: number
+  minimumQuantity: number
   inputQuantity: number
   outputQuantity: number
   updatedAt: number
@@ -69,12 +74,14 @@ export type StockCountAggregateOutputType = {
 
 export type StockAvgAggregateInputType = {
   totalQuantity?: true
+  minimumQuantity?: true
   inputQuantity?: true
   outputQuantity?: true
 }
 
 export type StockSumAggregateInputType = {
   totalQuantity?: true
+  minimumQuantity?: true
   inputQuantity?: true
   outputQuantity?: true
 }
@@ -83,6 +90,7 @@ export type StockMinAggregateInputType = {
   id?: true
   productId?: true
   totalQuantity?: true
+  minimumQuantity?: true
   inputQuantity?: true
   outputQuantity?: true
   updatedAt?: true
@@ -92,6 +100,7 @@ export type StockMaxAggregateInputType = {
   id?: true
   productId?: true
   totalQuantity?: true
+  minimumQuantity?: true
   inputQuantity?: true
   outputQuantity?: true
   updatedAt?: true
@@ -101,6 +110,7 @@ export type StockCountAggregateInputType = {
   id?: true
   productId?: true
   totalQuantity?: true
+  minimumQuantity?: true
   inputQuantity?: true
   outputQuantity?: true
   updatedAt?: true
@@ -197,6 +207,7 @@ export type StockGroupByOutputType = {
   id: string
   productId: string
   totalQuantity: number
+  minimumQuantity: number
   inputQuantity: number
   outputQuantity: number
   updatedAt: Date
@@ -229,6 +240,7 @@ export type StockWhereInput = {
   id?: Prisma.StringFilter<"Stock"> | string
   productId?: Prisma.StringFilter<"Stock"> | string
   totalQuantity?: Prisma.IntFilter<"Stock"> | number
+  minimumQuantity?: Prisma.IntFilter<"Stock"> | number
   inputQuantity?: Prisma.IntFilter<"Stock"> | number
   outputQuantity?: Prisma.IntFilter<"Stock"> | number
   updatedAt?: Prisma.DateTimeFilter<"Stock"> | Date | string
@@ -239,6 +251,7 @@ export type StockOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   totalQuantity?: Prisma.SortOrder
+  minimumQuantity?: Prisma.SortOrder
   inputQuantity?: Prisma.SortOrder
   outputQuantity?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -252,6 +265,7 @@ export type StockWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.StockWhereInput[]
   NOT?: Prisma.StockWhereInput | Prisma.StockWhereInput[]
   totalQuantity?: Prisma.IntFilter<"Stock"> | number
+  minimumQuantity?: Prisma.IntFilter<"Stock"> | number
   inputQuantity?: Prisma.IntFilter<"Stock"> | number
   outputQuantity?: Prisma.IntFilter<"Stock"> | number
   updatedAt?: Prisma.DateTimeFilter<"Stock"> | Date | string
@@ -262,6 +276,7 @@ export type StockOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   totalQuantity?: Prisma.SortOrder
+  minimumQuantity?: Prisma.SortOrder
   inputQuantity?: Prisma.SortOrder
   outputQuantity?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -279,6 +294,7 @@ export type StockScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Stock"> | string
   productId?: Prisma.StringWithAggregatesFilter<"Stock"> | string
   totalQuantity?: Prisma.IntWithAggregatesFilter<"Stock"> | number
+  minimumQuantity?: Prisma.IntWithAggregatesFilter<"Stock"> | number
   inputQuantity?: Prisma.IntWithAggregatesFilter<"Stock"> | number
   outputQuantity?: Prisma.IntWithAggregatesFilter<"Stock"> | number
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Stock"> | Date | string
@@ -287,6 +303,7 @@ export type StockScalarWhereWithAggregatesInput = {
 export type StockCreateInput = {
   id?: string
   totalQuantity?: number
+  minimumQuantity?: number
   inputQuantity?: number
   outputQuantity?: number
   updatedAt?: Date | string
@@ -297,6 +314,7 @@ export type StockUncheckedCreateInput = {
   id?: string
   productId: string
   totalQuantity?: number
+  minimumQuantity?: number
   inputQuantity?: number
   outputQuantity?: number
   updatedAt?: Date | string
@@ -305,6 +323,7 @@ export type StockUncheckedCreateInput = {
 export type StockUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   totalQuantity?: Prisma.IntFieldUpdateOperationsInput | number
+  minimumQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   inputQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   outputQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -315,6 +334,7 @@ export type StockUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   totalQuantity?: Prisma.IntFieldUpdateOperationsInput | number
+  minimumQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   inputQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   outputQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -324,6 +344,7 @@ export type StockCreateManyInput = {
   id?: string
   productId: string
   totalQuantity?: number
+  minimumQuantity?: number
   inputQuantity?: number
   outputQuantity?: number
   updatedAt?: Date | string
@@ -332,6 +353,7 @@ export type StockCreateManyInput = {
 export type StockUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   totalQuantity?: Prisma.IntFieldUpdateOperationsInput | number
+  minimumQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   inputQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   outputQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -341,6 +363,7 @@ export type StockUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   totalQuantity?: Prisma.IntFieldUpdateOperationsInput | number
+  minimumQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   inputQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   outputQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -355,6 +378,7 @@ export type StockCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   totalQuantity?: Prisma.SortOrder
+  minimumQuantity?: Prisma.SortOrder
   inputQuantity?: Prisma.SortOrder
   outputQuantity?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -362,6 +386,7 @@ export type StockCountOrderByAggregateInput = {
 
 export type StockAvgOrderByAggregateInput = {
   totalQuantity?: Prisma.SortOrder
+  minimumQuantity?: Prisma.SortOrder
   inputQuantity?: Prisma.SortOrder
   outputQuantity?: Prisma.SortOrder
 }
@@ -370,6 +395,7 @@ export type StockMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   totalQuantity?: Prisma.SortOrder
+  minimumQuantity?: Prisma.SortOrder
   inputQuantity?: Prisma.SortOrder
   outputQuantity?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -379,6 +405,7 @@ export type StockMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   totalQuantity?: Prisma.SortOrder
+  minimumQuantity?: Prisma.SortOrder
   inputQuantity?: Prisma.SortOrder
   outputQuantity?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
@@ -386,6 +413,7 @@ export type StockMinOrderByAggregateInput = {
 
 export type StockSumOrderByAggregateInput = {
   totalQuantity?: Prisma.SortOrder
+  minimumQuantity?: Prisma.SortOrder
   inputQuantity?: Prisma.SortOrder
   outputQuantity?: Prisma.SortOrder
 }
@@ -433,6 +461,7 @@ export type IntFieldUpdateOperationsInput = {
 export type StockCreateWithoutProductInput = {
   id?: string
   totalQuantity?: number
+  minimumQuantity?: number
   inputQuantity?: number
   outputQuantity?: number
   updatedAt?: Date | string
@@ -441,6 +470,7 @@ export type StockCreateWithoutProductInput = {
 export type StockUncheckedCreateWithoutProductInput = {
   id?: string
   totalQuantity?: number
+  minimumQuantity?: number
   inputQuantity?: number
   outputQuantity?: number
   updatedAt?: Date | string
@@ -465,6 +495,7 @@ export type StockUpdateToOneWithWhereWithoutProductInput = {
 export type StockUpdateWithoutProductInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   totalQuantity?: Prisma.IntFieldUpdateOperationsInput | number
+  minimumQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   inputQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   outputQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -473,6 +504,7 @@ export type StockUpdateWithoutProductInput = {
 export type StockUncheckedUpdateWithoutProductInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   totalQuantity?: Prisma.IntFieldUpdateOperationsInput | number
+  minimumQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   inputQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   outputQuantity?: Prisma.IntFieldUpdateOperationsInput | number
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -484,6 +516,7 @@ export type StockSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   id?: boolean
   productId?: boolean
   totalQuantity?: boolean
+  minimumQuantity?: boolean
   inputQuantity?: boolean
   outputQuantity?: boolean
   updatedAt?: boolean
@@ -494,6 +527,7 @@ export type StockSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   id?: boolean
   productId?: boolean
   totalQuantity?: boolean
+  minimumQuantity?: boolean
   inputQuantity?: boolean
   outputQuantity?: boolean
   updatedAt?: boolean
@@ -504,6 +538,7 @@ export type StockSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   id?: boolean
   productId?: boolean
   totalQuantity?: boolean
+  minimumQuantity?: boolean
   inputQuantity?: boolean
   outputQuantity?: boolean
   updatedAt?: boolean
@@ -514,12 +549,13 @@ export type StockSelectScalar = {
   id?: boolean
   productId?: boolean
   totalQuantity?: boolean
+  minimumQuantity?: boolean
   inputQuantity?: boolean
   outputQuantity?: boolean
   updatedAt?: boolean
 }
 
-export type StockOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "productId" | "totalQuantity" | "inputQuantity" | "outputQuantity" | "updatedAt", ExtArgs["result"]["stock"]>
+export type StockOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "productId" | "totalQuantity" | "minimumQuantity" | "inputQuantity" | "outputQuantity" | "updatedAt", ExtArgs["result"]["stock"]>
 export type StockInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   product?: boolean | Prisma.ProductDefaultArgs<ExtArgs>
 }
@@ -539,6 +575,7 @@ export type $StockPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     id: string
     productId: string
     totalQuantity: number
+    minimumQuantity: number
     inputQuantity: number
     outputQuantity: number
     updatedAt: Date
@@ -969,6 +1006,7 @@ export interface StockFieldRefs {
   readonly id: Prisma.FieldRef<"Stock", 'String'>
   readonly productId: Prisma.FieldRef<"Stock", 'String'>
   readonly totalQuantity: Prisma.FieldRef<"Stock", 'Int'>
+  readonly minimumQuantity: Prisma.FieldRef<"Stock", 'Int'>
   readonly inputQuantity: Prisma.FieldRef<"Stock", 'Int'>
   readonly outputQuantity: Prisma.FieldRef<"Stock", 'Int'>
   readonly updatedAt: Prisma.FieldRef<"Stock", 'DateTime'>
