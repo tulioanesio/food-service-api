@@ -1,3 +1,4 @@
+import { StockModule } from './modules/stock/stock.module';
 import { Module } from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
@@ -39,6 +40,7 @@ import { ProductsModule } from './modules/products/products.module';
     AuthModule,
     UsersModule,
     ProductsModule,
+    StockModule,
     HealthModule,
   ],
   providers: [
