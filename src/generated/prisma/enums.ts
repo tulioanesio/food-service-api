@@ -55,6 +55,7 @@ export type PaymentMethod = (typeof PaymentMethod)[keyof typeof PaymentMethod]
 
 
 export const PaymentStatus = {
+  REFUND_PENDING: 'REFUND_PENDING',
   PENDING: 'PENDING',
   PAID: 'PAID',
   REFUNDED: 'REFUNDED',

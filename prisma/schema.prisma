@@ -58,26 +58,32 @@ model Product {
 }
 
 model Stock {
-  id             String   @id @default(uuid(7))
-  productId      String   @unique
-  totalQuantity  Int      @default(0)
-  inputQuantity  Int      @default(0)
-  outputQuantity Int      @default(0)
-  updatedAt      DateTime @updatedAt
-  product        Product  @relation(fields: [productId], references: [id])
+  id              String   @id @default(uuid(7))
+  productId       String   @unique
+  totalQuantity   Int      @default(0)
+  minimumQuantity Int      @default(0)
+  inputQuantity   Int      @default(0)
+  outputQuantity  Int      @default(0)
+  updatedAt       DateTime @updatedAt
+  product         Product  @relation(fields: [productId], references: [id])
 }
 
 model StockMovement {
-  id        String            @id @default(uuid(7))
-  productId String
-  userId    String?
-  type      StockMovementType
-  quantity  Int
-  reason    String?
-  createdAt DateTime          @default(now())
-  product   Product           @relation(fields: [productId], references: [id])
-  user      User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id             String            @id @default(uuid(7))
+  productId      String
+  idempotencyKey String?
+  orderId        String?
+  order          Order?            @relation(fields: [orderId], references: [id])
+  userId         String?
+  type           StockMovementType
+  quantity       Int
+  reason         String?
+  createdAt      DateTime          @default(now())
+  product        Product           @relation(fields: [productId], references: [id])
+  user           User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
 
+  @@unique([productId, idempotencyKey])
+  @@unique([orderId, productId, type])
   @@index([productId, createdAt])
 }
 
@@ -89,15 +95,17 @@ enum StockMovementType {
 }
 
 model Order {
-  id         String      @id @default(uuid(7))
-  customerId String?
-  total      Decimal     @db.Decimal(10, 2)
-  status     OrderStatus @default(OPEN)
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  customer   Customer?   @relation(fields: [customerId], references: [id])
-  items      OrderItem[]
-  payments   Payment[]
+  id                 String          @id @default(uuid(7))
+  customerId         String?
+  cancellationReason String?
+  stockMoves         StockMovement[]
+  total              Decimal         @db.Decimal(10, 2)
+  status             OrderStatus     @default(OPEN)
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  customer           Customer?       @relation(fields: [customerId], references: [id])
+  items              OrderItem[]
+  payments           Payment[]
 
   @@index([customerId])
   @@index([status])
@@ -127,18 +135,25 @@ model OrderItem {
 }
 
 model Payment {
-  id            String        @id @default(uuid(7))
-  orderId       String
-  receivedById  String?
-  method        PaymentMethod
-  status        PaymentStatus @default(PENDING)
-  amount        Decimal       @db.Decimal(10, 2)
-  transactionId String?
-  paidAt        DateTime?
-  createdAt     DateTime      @default(now())
-  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  receivedBy    User?         @relation(fields: [receivedById], references: [id], onDelete: SetNull)
+  id             String        @id @default(uuid(7))
+  orderId        String
+  receivedById   String?
+  method         PaymentMethod
+  status         PaymentStatus @default(PENDING)
+  amount         Decimal       @db.Decimal(10, 2)
+  transactionId  String?       @unique
+  idempotencyKey String?
+  provider       String        @default("MANUAL")
+  receivedAmount Decimal?      @db.Decimal(10, 2)
+  change         Decimal?      @db.Decimal(10, 2)
+  refundId       String?       @unique
+  reversalReason String?
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  receivedBy     User?         @relation(fields: [receivedById], references: [id], onDelete: SetNull)
 
+  @@unique([orderId, idempotencyKey])
   @@index([orderId])
 }
 
@@ -151,6 +166,7 @@ enum PaymentMethod {
 }
 
 enum PaymentStatus {
+  REFUND_PENDING
   PENDING
   PAID
   REFUNDED
