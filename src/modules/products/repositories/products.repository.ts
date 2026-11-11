@@ -19,7 +19,7 @@ export class ProductsRepository {
 
   create(data: { name: string; category: string; price: number }) {
     return this.prismaService.product.create({
-      data,
+      data: { ...data, stock: { create: {} } },
       select: publicProductSelect,
     });
   }

@@ -1087,6 +1087,7 @@ export const StockScalarFieldEnum = {
   id: 'id',
   productId: 'productId',
   totalQuantity: 'totalQuantity',
+  minimumQuantity: 'minimumQuantity',
   inputQuantity: 'inputQuantity',
   outputQuantity: 'outputQuantity',
   updatedAt: 'updatedAt'
@@ -1098,6 +1099,8 @@ export type StockScalarFieldEnum = (typeof StockScalarFieldEnum)[keyof typeof St
 export const StockMovementScalarFieldEnum = {
   id: 'id',
   productId: 'productId',
+  idempotencyKey: 'idempotencyKey',
+  orderId: 'orderId',
   userId: 'userId',
   type: 'type',
   quantity: 'quantity',
@@ -1111,6 +1114,7 @@ export type StockMovementScalarFieldEnum = (typeof StockMovementScalarFieldEnum)
 export const OrderScalarFieldEnum = {
   id: 'id',
   customerId: 'customerId',
+  cancellationReason: 'cancellationReason',
   total: 'total',
   status: 'status',
   createdAt: 'createdAt',
@@ -1140,6 +1144,12 @@ export const PaymentScalarFieldEnum = {
   status: 'status',
   amount: 'amount',
   transactionId: 'transactionId',
+  idempotencyKey: 'idempotencyKey',
+  provider: 'provider',
+  receivedAmount: 'receivedAmount',
+  change: 'change',
+  refundId: 'refundId',
+  reversalReason: 'reversalReason',
   paidAt: 'paidAt',
   createdAt: 'createdAt'
 } as const
