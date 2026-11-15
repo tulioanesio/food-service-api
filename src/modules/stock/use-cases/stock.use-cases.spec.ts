@@ -4,7 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { StockRepository, StockStore } from '../repositories/stock.repository';
-import { MoveStockUseCase, StockHistoryUseCase } from './stock.use-cases';
+import {
+  GetStockUseCase,
+  ListStockUseCase,
+  MoveStockUseCase,
+  StockHistoryUseCase,
+  UpdateStockMinimumUseCase,
+} from './stock.use-cases';
 
 describe('Stock business rules', () => {
   const store = {
@@ -14,6 +20,8 @@ describe('Stock business rules', () => {
     update: jest.fn(),
     movement: jest.fn(),
     history: jest.fn(),
+    find: jest.fn(),
+    list: jest.fn(),
   };
   const repository = {
     ...store,
@@ -128,5 +136,78 @@ describe('Stock business rules', () => {
         to: '2026-11-04',
       }),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it('gets stock with lowStock flag and throws NotFoundException when missing', async () => {
+    const getStock = new GetStockUseCase(repository);
+    store.find.mockResolvedValueOnce(null);
+    await expect(getStock.execute('missing')).rejects.toThrow(
+      NotFoundException,
+    );
+
+    store.find.mockResolvedValueOnce({
+      productId: 'p',
+      totalQuantity: 2,
+      minimumQuantity: 5,
+    });
+    await expect(getStock.execute('p')).resolves.toEqual({
+      productId: 'p',
+      totalQuantity: 2,
+      minimumQuantity: 5,
+      lowStock: true,
+    });
+  });
+
+  it('lists stock with default and explicit lowStock flag', async () => {
+    const listStock = new ListStockUseCase(repository);
+    store.list.mockResolvedValue([{ productId: 'p' }]);
+
+    await expect(listStock.execute()).resolves.toEqual([{ productId: 'p' }]);
+    expect(store.list).toHaveBeenCalledWith(false);
+
+    await expect(listStock.execute(true)).resolves.toEqual([
+      { productId: 'p' },
+    ]);
+    expect(store.list).toHaveBeenLastCalledWith(true);
+  });
+
+  it('returns stock history or throws NotFoundException when product does not exist', async () => {
+    const historyUseCase = new StockHistoryUseCase(repository);
+    store.product.mockResolvedValueOnce(null);
+    await expect(historyUseCase.execute('missing', {})).rejects.toThrow(
+      NotFoundException,
+    );
+
+    store.history.mockResolvedValueOnce([{ id: 'm1' }]);
+    await expect(
+      historyUseCase.execute('p', {
+        type: 'ENTRY',
+        userId: 'u1',
+        from: '2026-11-01',
+        to: '2026-11-05',
+      }),
+    ).resolves.toEqual([{ id: 'm1' }]);
+    expect(store.history).toHaveBeenCalledWith({
+      productId: 'p',
+      type: 'ENTRY',
+      userId: 'u1',
+      createdAt: { gte: '2026-11-01', lte: '2026-11-05' },
+    });
+  });
+
+  it('updates stock minimum or throws NotFoundException when product does not exist', async () => {
+    const minimumUseCase = new UpdateStockMinimumUseCase(repository);
+    store.product.mockResolvedValueOnce(null);
+    await expect(minimumUseCase.execute('missing', 10)).rejects.toThrow(
+      NotFoundException,
+    );
+
+    store.update.mockResolvedValueOnce({ productId: 'p', minimumQuantity: 10 });
+    await expect(minimumUseCase.execute('p', 10)).resolves.toEqual({
+      productId: 'p',
+      minimumQuantity: 10,
+    });
+    expect(store.lock).toHaveBeenCalledWith('p');
+    expect(store.update).toHaveBeenCalledWith('p', { minimumQuantity: 10 });
   });
 });
