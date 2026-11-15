@@ -47,7 +47,11 @@ integration('Reports (PostgreSQL + HTTP)', () => {
     const product = await request(app.getHttpServer())
       .post('/api/v1/products')
       .auth(managerToken, { type: 'bearer' })
-      .send({ name: `Report Item ${randomUUID()}`, category: 'Food', price: 20 })
+      .send({
+        name: `Report Item ${randomUUID()}`,
+        category: 'Food',
+        price: 20,
+      })
       .expect(201);
     const productId = (product.body as { id: string }).id;
 

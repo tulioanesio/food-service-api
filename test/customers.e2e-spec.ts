@@ -6,9 +6,7 @@ import { PrismaService } from '../src/prisma/prisma.service';
 import { createAndLoginUser, createE2eApp } from './e2e-helper';
 
 function generateValidCpf(): string {
-  const digits = Array.from({ length: 9 }, () =>
-    Math.floor(Math.random() * 9),
-  );
+  const digits = Array.from({ length: 9 }, () => Math.floor(Math.random() * 9));
   if (digits.every((d) => d === digits[0])) digits[0] = (digits[0] + 1) % 9;
   for (const size of [9, 10]) {
     let sum = 0;
