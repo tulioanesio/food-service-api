@@ -1,3 +1,5 @@
+import { CustomersModule } from './modules/customers/customers.module';
+import { ReportsModule } from './modules/reports/reports.module';
 import { StockModule } from './modules/stock/stock.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
@@ -46,6 +48,8 @@ import { ProductsModule } from './modules/products/products.module';
     OrdersModule,
     PaymentsModule,
     HealthModule,
+    CustomersModule,
+    ReportsModule,
   ],
   providers: [
     {
