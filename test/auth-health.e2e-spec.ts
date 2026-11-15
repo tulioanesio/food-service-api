@@ -53,11 +53,11 @@ integration('Auth and Health (PostgreSQL + HTTP)', () => {
     const token = (loginRes.body as { accessToken: string }).accessToken;
     expect(token).toBeTruthy();
 
-    // Login with email
+    // Unknown login
     await request(app.getHttpServer())
       .post('/api/v1/auth/login')
-      .send({ login: email, password })
-      .expect(201);
+      .send({ login: 'non-existent-login', password })
+      .expect(401);
 
     // Wrong password
     await request(app.getHttpServer())
