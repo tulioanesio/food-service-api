@@ -16,6 +16,28 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  db_test:
+    image: postgres:16-alpine
+    container_name: food_service_test_db
+    profiles: ['test']
+    environment:
+      POSTGRES_USER: ${TEST_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${TEST_DB_PASSWORD:-orders_test}
+      POSTGRES_DB: ${TEST_DB_NAME:-orders_test}
+    ports:
+      - '${TEST_DB_PORT:-5433}:5432'
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${TEST_DB_USER:-postgres} -d ${TEST_DB_NAME:-orders_test}',
+        ]
+      interval: 2s
+      timeout: 5s
+      retries: 15
   # redis:
   #   image: redis:alpine
   #   container_name: test_redis
