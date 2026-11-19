@@ -3,6 +3,7 @@ import { ProductsRepository } from '../repositories/products.repository';
 import { CreateProductUseCase } from './create-product.use-case';
 import { DeactivateProductUseCase } from './deactivate-product.use-case';
 import { GetProductUseCase } from './get-product.use-case';
+import { ListProductsUseCase } from './list-products.use-case';
 import { UpdateProductUseCase } from './update-product.use-case';
 
 describe('Product use cases', () => {
@@ -81,5 +82,55 @@ describe('Product use cases', () => {
         name: 'Other Burger',
       }),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('lists products via repository', async () => {
+    const findAllSpy = jest
+      .spyOn(productsRepository, 'findAll')
+      .mockResolvedValue([{ id: 'p1' }] as never);
+
+    await expect(
+      new ListProductsUseCase(productsRepository).execute({ search: 'Burger' }),
+    ).resolves.toEqual([{ id: 'p1' }]);
+    expect(findAllSpy).toHaveBeenCalledWith({ search: 'Burger' });
+  });
+
+  it('returns an active product by id', async () => {
+    findActiveByIdMock.mockResolvedValue({ id: 'product-id' });
+
+    await expect(
+      new GetProductUseCase(productsRepository).execute('product-id'),
+    ).resolves.toEqual({ id: 'product-id' });
+  });
+
+  it('throws NotFoundException when deactivating a missing product', async () => {
+    findActiveByIdMock.mockResolvedValue(null);
+
+    await expect(
+      new DeactivateProductUseCase(productsRepository).execute('missing'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('throws NotFoundException when updating a missing product and updates when valid', async () => {
+    findActiveByIdMock.mockResolvedValueOnce(null);
+    await expect(
+      new UpdateProductUseCase(productsRepository).execute('missing', {
+        price: 10,
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+
+    findActiveByIdMock.mockResolvedValueOnce({
+      id: 'product-id',
+      name: 'Classic Burger',
+      category: 'Burgers',
+    });
+    findByNameAndCategoryMock.mockResolvedValueOnce({ id: 'product-id' });
+    updateMock.mockResolvedValueOnce({ id: 'product-id', price: 30 });
+
+    await expect(
+      new UpdateProductUseCase(productsRepository).execute('product-id', {
+        price: 30,
+      }),
+    ).resolves.toEqual({ id: 'product-id', price: 30 });
   });
 });

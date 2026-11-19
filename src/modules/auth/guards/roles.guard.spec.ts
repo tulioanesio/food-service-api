@@ -19,6 +19,13 @@ const createContext = (handler: object, user?: AuthenticatedUser) =>
   }) as unknown as ExecutionContext;
 
 describe('RolesGuard', () => {
+  it('allows access when no roles are required', () => {
+    const handler = () => undefined;
+    const guard = new RolesGuard(new Reflector());
+
+    expect(guard.canActivate(createContext(handler))).toBe(true);
+  });
+
   it('returns 401 when a protected route has no authenticated user', () => {
     const handler = () => undefined;
     Reflect.defineMetadata(ROLES_KEY, [UserRole.ADMIN], handler);
