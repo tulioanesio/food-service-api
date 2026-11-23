@@ -1,9 +1,11 @@
-# Diagrama UML — Classes de Domínio
+# UML — Diagrama de Classes: Domínio e Entidades
 
-Modelo de classes derivado diretamente de [schema.prisma](file:///home/pedronieto/projects/faculdade/food-service-api/prisma/schema.prisma).
+Modelo de domínio persistido no PostgreSQL via Prisma ORM, com suas enumerações, atributos, chaves e cardinalidades.
 
 ```mermaid
 classDiagram
+  direction TB
+
   class UserRole {
     <<enumeration>>
     ADMIN
@@ -51,11 +53,12 @@ classDiagram
   }
 
   class User {
-    +String id
+    <<entity>>
+    +UUID id
     +String name
     +String login
     +String? email
-    +String passwordHash
+    -String passwordHash
     +UserRole role
     +Boolean isActive
     +DateTime createdAt
@@ -64,7 +67,8 @@ classDiagram
   }
 
   class Customer {
-    +String id
+    <<entity>>
+    +UUID id
     +String name
     +String? cpf
     +String? phone
@@ -72,7 +76,8 @@ classDiagram
   }
 
   class Product {
-    +String id
+    <<entity>>
+    +UUID id
     +String name
     +String category
     +Decimal price
@@ -83,8 +88,9 @@ classDiagram
   }
 
   class Stock {
-    +String id
-    +String productId
+    <<entity>>
+    +UUID id
+    +UUID productId
     +Int totalQuantity
     +Int minimumQuantity
     +Int inputQuantity
@@ -93,11 +99,12 @@ classDiagram
   }
 
   class StockMovement {
-    +String id
-    +String productId
+    <<entity>>
+    +UUID id
+    +UUID productId
     +String? idempotencyKey
-    +String? orderId
-    +String? userId
+    +UUID? orderId
+    +UUID? userId
     +StockMovementType type
     +Int quantity
     +String? reason
@@ -105,8 +112,9 @@ classDiagram
   }
 
   class Order {
-    +String id
-    +String? customerId
+    <<entity>>
+    +UUID id
+    +UUID? customerId
     +String? cancellationReason
     +Decimal total
     +OrderStatus status
@@ -115,18 +123,20 @@ classDiagram
   }
 
   class OrderItem {
-    +String id
-    +String orderId
-    +String productId
+    <<entity>>
+    +UUID id
+    +UUID orderId
+    +UUID productId
     +Int quantity
     +Decimal unitPrice
     +Decimal totalPrice
   }
 
   class Payment {
-    +String id
-    +String orderId
-    +String? receivedById
+    <<entity>>
+    +UUID id
+    +UUID orderId
+    +UUID? receivedById
     +PaymentMethod method
     +PaymentStatus status
     +Decimal amount
@@ -141,13 +151,22 @@ classDiagram
     +DateTime createdAt
   }
 
-  User "1" --> "0..*" StockMovement : realiza
+  User "1" --> "0..*" StockMovement : registra
   User "1" --> "0..*" Payment : recebe
+  User ..> UserRole
+
   Customer "0..1" --> "0..*" Order : realiza
-  Product "1" --> "0..1" Stock : possui
-  Product "1" --> "0..*" StockMovement : registra
+
+  Product "1" *-- "0..1" Stock : controla
+  Product "1" --> "0..*" StockMovement : movimenta
   Product "1" --> "0..*" OrderItem : compõe
+
   Order "1" *-- "1..*" OrderItem : contém
-  Order "1" --> "0..*" Payment : possui
-  Order "0..1" --> "0..*" StockMovement : origina
+  Order "1" --> "0..*" Payment : liquida
+  Order "0..1" --> "0..*" StockMovement : gera
+  Order ..> OrderStatus
+
+  StockMovement ..> StockMovementType
+  Payment ..> PaymentMethod
+  Payment ..> PaymentStatus
 ```
