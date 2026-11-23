@@ -3,7 +3,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { StockModule } from './modules/stock/stock.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './modules/users/users.module';
@@ -11,6 +11,8 @@ import { envSchema } from './config/env.validation';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { HealthModule } from './health/health.module';
+import { CorrelationIdMiddleware } from './observability/correlation-id.middleware';
+import { ObservabilityModule } from './observability/observability.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
@@ -48,6 +50,7 @@ import { ProductsModule } from './modules/products/products.module';
     OrdersModule,
     PaymentsModule,
     HealthModule,
+    ObservabilityModule,
     CustomersModule,
     ReportsModule,
   ],
@@ -67,4 +70,8 @@ import { ProductsModule } from './modules/products/products.module';
   ],
   controllers: [],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(CorrelationIdMiddleware).forRoutes('*');
+  }
+}

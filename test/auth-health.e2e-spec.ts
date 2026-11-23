@@ -21,12 +21,20 @@ integration('Auth and Health (PostgreSQL + HTTP)', () => {
     if (app) await app.close();
   });
 
-  it('exposes public health check endpoint', async () => {
+  it('exposes public health check, metrics endpoint and X-Request-Id correlation header', async () => {
     const res = await request(app.getHttpServer())
       .get('/api/v1/health')
+      .set('X-Request-Id', 'e2e-trace-001')
       .expect(200);
 
     expect(res.body).toMatchObject({ status: 'ok' });
+    expect(res.headers['x-request-id']).toBe('e2e-trace-001');
+
+    const metricsRes = await request(app.getHttpServer())
+      .get('/api/v1/metrics')
+      .expect(200);
+    expect(metricsRes.text).toContain('http_requests_total');
+    expect(metricsRes.headers['x-request-id']).toBeTruthy();
   });
 
   it('authenticates active users by login or email and rejects invalid or inactive credentials', async () => {
