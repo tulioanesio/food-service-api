@@ -25,7 +25,7 @@ flowchart LR
       UC_USER_GET(("UC06 — Consultar Usuário"))
       UC_USER_UPDATE(("UC07 — Atualizar Próprio Perfil"))
       UC_USER_DEACTIVATE(("UC08 — Desativar Usuário\n(Soft Delete)"))
-      UC_USER_PURGE(("UC09 — Purgar Usuários\nExcluídos > 30 dias"))
+      UC_USER_PURGE(("UC09 — Excluir Definitivamente\nUsuários Desativados > 30 dias"))
     end
 
     subgraph Customers["Módulo Customers"]

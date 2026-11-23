@@ -28,4 +28,4 @@ Modelam as interações temporais, blocos condicionais (`alt`/`opt`), iteraçõe
 - [01 — Pipeline HTTP, Autenticação JWT e Observabilidade](./sequence/01-auth-e-observabilidade.md)
 - [02 — Ciclo de Vida de Pedidos e Controle Concorrente de Estoque](./sequence/02-pedidos-e-estoque.md)
 - [03 — Pagamentos, Estornos e Reconciliação via Stripe Webhook](./sequence/03-pagamentos-e-stripe-webhook.md)
-- [04 — Relatórios Consistentes e Rotina Agendada de Purga](./sequence/04-relatorios-e-purga.md)
+- [04 — Relatórios Consistentes e Limpeza Agendada de Usuários](./sequence/04-relatorios-e-limpeza-usuarios.md)

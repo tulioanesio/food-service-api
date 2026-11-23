@@ -1,6 +1,6 @@
-# UML — Sequência: Relatórios Consistentes e Rotina de Purga
+# UML — Sequência: Relatórios Consistentes e Limpeza de Usuários
 
-Detalha o isolamento transacional dos relatórios gerenciais e a rotina agendada de limpeza de usuários desativados.
+Detalha o isolamento transacional dos relatórios gerenciais e a rotina agendada de exclusão definitiva de usuários desativados.
 
 ## 1. Geração de Relatórios (`RepeatableRead`)
 
@@ -34,7 +34,7 @@ sequenceDiagram
   UC-->>Manager: 200 OK
 ```
 
-## 2. Rotina Agendada de Purga de Usuários
+## 2. Rotina Agendada de Exclusão Definitiva de Usuários Desativados
 
 ```mermaid
 sequenceDiagram
