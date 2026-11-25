@@ -97,14 +97,18 @@ export class CreatePaymentUseCase {
       throw new ConflictException(
         'Unresolved Stripe creation: reconcile the payment before retrying',
       );
-    let intent: Stripe.PaymentIntent;
+    let session: Stripe.Checkout.Session;
+    const successUrl =
+      dto.successUrl ?? 'http://localhost:5173/pedidos?payment=success';
+    const cancelUrl =
+      dto.cancelUrl ?? 'http://localhost:5173/pedidos?payment=cancelled';
     try {
-      intent = payment.transactionId
-        ? await this.stripe.retrieve(payment.transactionId)
-        : await this.stripe.create(payment);
+      session = await this.stripe.createCheckoutSession(
+        payment,
+        successUrl,
+        cancelUrl,
+      );
     } catch (error) {
-      // A definitive parameter rejection created no remote payment. Network/5xx
-      // failures remain reserved because the remote outcome is unknown.
       if (
         !payment.transactionId &&
         error instanceof Stripe.errors.StripeInvalidRequestError &&
@@ -124,12 +128,17 @@ export class CreatePaymentUseCase {
         'Stripe is unavailable; retry using the same idempotency key',
       );
     }
-    checkIntent(payment, intent);
-    const updated = await this.repository.transaction(async (store) => {
-      await store.lock(orderId);
-      return store.updatePayment(payment.id, { transactionId: intent.id });
-    });
-    return { payment: updated, clientSecret: intent.client_secret };
+    const intentId =
+      typeof session.payment_intent === 'string'
+        ? session.payment_intent
+        : session.payment_intent?.id;
+    const updated = intentId
+      ? await this.repository.transaction(async (store) => {
+          await store.lock(orderId);
+          return store.updatePayment(payment.id, { transactionId: intentId });
+        })
+      : payment;
+    return { payment: updated, checkoutUrl: session.url };
   }
 }
 @Injectable()
@@ -236,6 +245,38 @@ export class StripeWebhookUseCase {
               ? 'REFUNDED'
               : 'REFUND_PENDING',
           reversalReason: current.reversalReason ?? 'Stripe external refund',
+        });
+      });
+      return { received: true };
+    }
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object;
+      const payment = session.metadata?.paymentId
+        ? await this.repository.payment(session.metadata.paymentId)
+        : null;
+      if (!payment) return { received: true };
+      const intentId =
+        typeof session.payment_intent === 'string'
+          ? session.payment_intent
+          : session.payment_intent?.id;
+      if (
+        session.livemode ||
+        session.currency !== 'brl' ||
+        session.amount_total !== payment.amount.mul(100).toNumber() ||
+        payment.provider !== 'STRIPE'
+      ) {
+        throw new BadRequestException(
+          'Checkout session does not match local payment',
+        );
+      }
+      await this.repository.transaction(async (store) => {
+        const order = await store.lock(payment.orderId);
+        const current = order!.payments.find((p) => p.id === payment.id)!;
+        if (current.status !== 'PENDING') return;
+        await store.updatePayment(payment.id, {
+          ...(intentId ? { transactionId: intentId } : {}),
+          status: 'PAID',
+          paidAt: new Date(),
         });
       });
       return { received: true };

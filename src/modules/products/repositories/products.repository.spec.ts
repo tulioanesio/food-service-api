@@ -42,7 +42,55 @@ describe('ProductsRepository', () => {
       ...data,
     });
     expect(productDelegate.create).toHaveBeenCalledWith({
-      data: { ...data, stock: { create: {} } },
+      data: {
+        ...data,
+        stock: {
+          create: {
+            totalQuantity: 0,
+            inputQuantity: 0,
+            minimumQuantity: 0,
+          },
+        },
+      },
+      select: publicProductSelect,
+    });
+  });
+
+  it('creates a product with initial stock and movement when initialStock > 0', async () => {
+    const data = {
+      name: 'Burger',
+      category: 'Lanches',
+      price: 25,
+      initialStock: 15,
+      minimumStock: 5,
+    };
+    productDelegate.create.mockResolvedValue({ id: 'p1', ...data });
+
+    await expect(repository.create(data)).resolves.toEqual({
+      id: 'p1',
+      ...data,
+    });
+    expect(productDelegate.create).toHaveBeenCalledWith({
+      data: {
+        name: 'Burger',
+        category: 'Lanches',
+        price: 25,
+        stock: {
+          create: {
+            totalQuantity: 15,
+            inputQuantity: 15,
+            minimumQuantity: 5,
+          },
+        },
+        stockMoves: {
+          create: {
+            type: 'ENTRY',
+            quantity: 15,
+            idempotencyKey: expect.any(String) as string,
+            reason: 'Estoque inicial no cadastro do produto',
+          },
+        },
+      },
       select: publicProductSelect,
     });
   });

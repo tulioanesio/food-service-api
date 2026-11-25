@@ -23,7 +23,7 @@ export class OrderSummaryDto {
 }
 export class ReceiptSummaryDto {
   @ApiProperty({
-    enum: ['CASH', 'PIX', 'CREDIT_CARD', 'DEBIT_CARD', 'MEAL_VOUCHER'],
+    enum: ['CASH', 'PIX', 'CREDIT_CARD', 'DEBIT_CARD'],
   })
   method: string;
   @ApiProperty() count: number;

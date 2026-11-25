@@ -82,6 +82,14 @@ describe('Stripe test-mode boundary', () => {
         retrieve: jest.fn().mockResolvedValue({ id: 'pi_1' }),
         cancel: jest.fn().mockResolvedValue({ id: 'pi_1', status: 'canceled' }),
       },
+      checkout: {
+        sessions: {
+          create: jest.fn().mockResolvedValue({
+            id: 'cs_1',
+            url: 'https://checkout.stripe.com/c/pay/cs_1',
+          }),
+        },
+      },
       refunds: {
         retrieve: jest.fn().mockResolvedValue({ id: 're_1' }),
         create: jest.fn().mockResolvedValue({ id: 're_1' }),
@@ -128,6 +136,25 @@ describe('Stripe test-mode boundary', () => {
     expect(client.refunds.create).toHaveBeenCalledWith(
       { payment_intent: 'pi_1' },
       { idempotencyKey: 'refund:pi_1' },
+    );
+
+    await expect(
+      gateway.createCheckoutSession(
+        payment,
+        'https://app.test/ok',
+        'https://app.test/cancel',
+      ),
+    ).resolves.toEqual({
+      id: 'cs_1',
+      url: 'https://checkout.stripe.com/c/pay/cs_1',
+    });
+    expect(client.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: 'payment',
+        success_url: 'https://app.test/ok',
+        cancel_url: 'https://app.test/cancel',
+      }),
+      { idempotencyKey: 'checkout:pay_1' },
     );
   });
 });

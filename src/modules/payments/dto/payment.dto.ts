@@ -1,5 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, ValidateIf, IsString, IsUUID, Matches } from 'class-validator';
+import {
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+  Matches,
+  MaxLength,
+  ValidateIf,
+} from 'class-validator';
 import { PaymentMethod } from 'src/generated/prisma/client';
 export class CreatePaymentDto {
   @ApiProperty() @IsUUID() idempotencyKey: string;
@@ -18,4 +27,18 @@ export class CreatePaymentDto {
   @IsString()
   @Matches(/^(?:0|[1-9]\d{0,7})(?:\.\d{1,2})?$/)
   receivedAmount?: string;
+  @ApiPropertyOptional({
+    example: 'http://localhost:5173/pedidos?payment=success',
+  })
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  @MaxLength(500)
+  successUrl?: string;
+  @ApiPropertyOptional({
+    example: 'http://localhost:5173/pedidos?payment=cancelled',
+  })
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  @MaxLength(500)
+  cancelUrl?: string;
 }
