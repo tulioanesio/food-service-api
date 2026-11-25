@@ -9,6 +9,7 @@ export const publicProductSelect = {
   stock: {
     select: {
       totalQuantity: true,
+      minimumQuantity: true,
       inputQuantity: true,
       outputQuantity: true,
       updatedAt: true,

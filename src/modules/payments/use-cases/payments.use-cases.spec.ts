@@ -30,6 +30,7 @@ describe('Payment rules', () => {
     transaction: (work: (s: OrderStore) => Promise<unknown>) => work(store),
   } as unknown as OrdersRepository;
   const create = jest.fn();
+  const createCheckoutSession = jest.fn();
   const retrieve = jest.fn();
   const cancel = jest.fn();
   const getRefund = jest.fn();
@@ -38,6 +39,7 @@ describe('Payment rules', () => {
   const assertConfigured = jest.fn();
   const gateway = {
     create,
+    createCheckoutSession,
     retrieve,
     cancel,
     getRefund,
@@ -209,13 +211,10 @@ describe('Payment rules', () => {
       createdAt: new Date(),
     };
     createPayment.mockResolvedValueOnce(cardPayment);
-    create.mockResolvedValueOnce({
-      id: 'pi_1',
-      livemode: false,
-      currency: 'brl',
-      amount: 1250,
-      metadata: { paymentId: 'p1', orderId: 'order' },
-      client_secret: 'secret_1',
+    createCheckoutSession.mockResolvedValueOnce({
+      id: 'cs_1',
+      url: 'https://checkout.stripe.com/c/pay/cs_1',
+      payment_intent: 'pi_1',
     });
     updatePayment.mockResolvedValueOnce({
       ...cardPayment,
@@ -230,10 +229,10 @@ describe('Payment rules', () => {
       ),
     ).resolves.toEqual({
       payment: { ...cardPayment, transactionId: 'pi_1' },
-      clientSecret: 'secret_1',
+      checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_1',
     });
 
-    // Existing card payment with transactionId retrieves intent
+    // Checkout session without immediate payment_intent returns pending payment and checkoutUrl
     lock.mockResolvedValue({
       status: 'CONFIRMED',
       total: new Prisma.Decimal('12.50'),
@@ -242,45 +241,41 @@ describe('Payment rules', () => {
           ...cardPayment,
           idempotencyKey: 'k3',
           receivedAmount: null,
-          transactionId: 'pi_1',
+          transactionId: null,
         },
       ],
     });
-    retrieve.mockResolvedValueOnce({
-      id: 'pi_1',
-      livemode: false,
-      currency: 'brl',
-      amount: 1250,
-      metadata: { paymentId: 'p1', orderId: 'order' },
-      client_secret: 'secret_1',
-    });
-    updatePayment.mockResolvedValueOnce({
-      ...cardPayment,
-      transactionId: 'pi_1',
+    createCheckoutSession.mockResolvedValueOnce({
+      id: 'cs_2',
+      url: 'https://checkout.stripe.com/c/pay/cs_2',
+      payment_intent: null,
     });
     await expect(
       useCase.execute(
         'order',
-        { method: 'CREDIT_CARD', amount: '12.50', idempotencyKey: 'k3' },
+        {
+          method: 'CREDIT_CARD',
+          amount: '12.50',
+          idempotencyKey: 'k3',
+          successUrl: 'https://app.test/ok',
+          cancelUrl: 'https://app.test/cancel',
+        },
         'u1',
       ),
-    ).resolves.toHaveProperty('clientSecret', 'secret_1');
-
-    // Mismatched intent throws BadRequestException
-    retrieve.mockResolvedValueOnce({
-      id: 'pi_1',
-      livemode: true,
-      currency: 'brl',
-      amount: 1250,
-      metadata: { paymentId: 'p1', orderId: 'order' },
+    ).resolves.toEqual({
+      payment: {
+        ...cardPayment,
+        idempotencyKey: 'k3',
+        receivedAmount: null,
+        transactionId: null,
+      },
+      checkoutUrl: 'https://checkout.stripe.com/c/pay/cs_2',
     });
-    await expect(
-      useCase.execute(
-        'order',
-        { method: 'CREDIT_CARD', amount: '12.50', idempotencyKey: 'k3' },
-        'u1',
-      ),
-    ).rejects.toThrow(BadRequestException);
+    expect(createCheckoutSession).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: 'p1' }),
+      'https://app.test/ok',
+      'https://app.test/cancel',
+    );
 
     // StripeInvalidRequestError 400 cancels local reservation
     lock.mockResolvedValue({
@@ -301,7 +296,7 @@ describe('Payment rules', () => {
       message: 'bad param',
       statusCode: 400,
     } as never);
-    create.mockRejectedValueOnce(invalidReq);
+    createCheckoutSession.mockRejectedValueOnce(invalidReq);
     await expect(
       useCase.execute(
         'order',
@@ -312,7 +307,7 @@ describe('Payment rules', () => {
     expect(updatePayment).toHaveBeenCalledWith('p1', { status: 'CANCELLED' });
 
     // Network/5xx Stripe error throws ServiceUnavailableException
-    create.mockRejectedValueOnce(new Error('timeout'));
+    createCheckoutSession.mockRejectedValueOnce(new Error('timeout'));
     await expect(
       useCase.execute(
         'order',
@@ -677,6 +672,60 @@ describe('Payment rules', () => {
         transactionId: 'pi_1',
         status: 'PENDING',
       });
+
+      // checkout.session.completed marks PAID and ignores missing or mismatched sessions
+      verify.mockReturnValueOnce({
+        livemode: false,
+        type: 'checkout.session.completed',
+        data: { object: { metadata: {} } },
+      });
+      await expect(
+        webhookUseCase.execute(Buffer.from('{}'), 'sig'),
+      ).resolves.toEqual({ received: true });
+
+      verify.mockReturnValueOnce({
+        livemode: false,
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            livemode: true,
+            currency: 'brl',
+            amount_total: 1000,
+            metadata: { paymentId: 'p1' },
+          },
+        },
+      });
+      paymentFn.mockResolvedValueOnce(localPayment);
+      await expect(
+        webhookUseCase.execute(Buffer.from('{}'), 'sig'),
+      ).rejects.toThrow(BadRequestException);
+
+      verify.mockReturnValueOnce({
+        livemode: false,
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            livemode: false,
+            currency: 'brl',
+            amount_total: 1000,
+            payment_intent: 'pi_checkout_1',
+            metadata: { paymentId: 'p1' },
+          },
+        },
+      });
+      paymentFn.mockResolvedValueOnce(localPayment);
+      lock.mockResolvedValueOnce({ payments: [localPayment] });
+      await expect(
+        webhookUseCase.execute(Buffer.from('{}'), 'sig'),
+      ).resolves.toEqual({ received: true });
+      expect(updatePayment).toHaveBeenLastCalledWith(
+        'p1',
+        expect.objectContaining({
+          transactionId: 'pi_checkout_1',
+          status: 'PAID',
+          paidAt: expect.any(Date) as Date,
+        }),
+      );
     });
   });
 });

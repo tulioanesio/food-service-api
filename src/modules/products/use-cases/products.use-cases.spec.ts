@@ -1,4 +1,8 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ProductsRepository } from '../repositories/products.repository';
 import { CreateProductUseCase } from './create-product.use-case';
 import { DeactivateProductUseCase } from './deactivate-product.use-case';
@@ -48,6 +52,28 @@ describe('Product use cases', () => {
         price: 25.9,
       }),
     ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('rejects invalid initialStock or minimumStock', async () => {
+    const useCase = new CreateProductUseCase(productsRepository);
+
+    await expect(
+      useCase.execute({
+        name: 'Classic Burger',
+        category: 'Burgers',
+        price: 25.9,
+        initialStock: -1,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    await expect(
+      useCase.execute({
+        name: 'Classic Burger',
+        category: 'Burgers',
+        price: 25.9,
+        minimumStock: 1.5,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
   });
 
   it('rejects access to an inactive product', async () => {

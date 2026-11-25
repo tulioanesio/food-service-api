@@ -162,7 +162,6 @@ enum PaymentMethod {
   PIX
   CREDIT_CARD
   DEBIT_CARD
-  MEAL_VOUCHER
 }
 
 enum PaymentStatus {

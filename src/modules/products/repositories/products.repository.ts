@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { publicProductSelect } from './product.select';
 
@@ -17,9 +18,41 @@ export class ProductsRepository {
     });
   }
 
-  create(data: { name: string; category: string; price: number }) {
+  create(data: {
+    name: string;
+    category: string;
+    price: number;
+    initialStock?: number;
+    minimumStock?: number;
+  }) {
+    const initialStock = data.initialStock ?? 0;
+    const minimumStock = data.minimumStock ?? 0;
+
     return this.prismaService.product.create({
-      data: { ...data, stock: { create: {} } },
+      data: {
+        name: data.name,
+        category: data.category,
+        price: data.price,
+        stock: {
+          create: {
+            totalQuantity: initialStock,
+            inputQuantity: initialStock,
+            minimumQuantity: minimumStock,
+          },
+        },
+        ...(initialStock > 0
+          ? {
+              stockMoves: {
+                create: {
+                  type: 'ENTRY',
+                  quantity: initialStock,
+                  idempotencyKey: randomUUID(),
+                  reason: 'Estoque inicial no cadastro do produto',
+                },
+              },
+            }
+          : {}),
+      },
       select: publicProductSelect,
     });
   }

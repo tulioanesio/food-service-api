@@ -35,6 +35,36 @@ export class StripeGateway {
       { idempotencyKey: `payment:${payment.id}` },
     );
   }
+  createCheckoutSession(
+    payment: Payment,
+    successUrl: string,
+    cancelUrl: string,
+  ) {
+    return this.client().checkout.sessions.create(
+      {
+        mode: 'payment',
+        line_items: [
+          {
+            price_data: {
+              currency: 'brl',
+              product_data: {
+                name: `Pedido #${payment.orderId.slice(0, 8)}`,
+              },
+              unit_amount: payment.amount.mul(100).toNumber(),
+            },
+            quantity: 1,
+          },
+        ],
+        metadata: { paymentId: payment.id, orderId: payment.orderId },
+        payment_intent_data: {
+          metadata: { paymentId: payment.id, orderId: payment.orderId },
+        },
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+      },
+      { idempotencyKey: `checkout:${payment.id}` },
+    );
+  }
   retrieve(id: string) {
     return this.client().paymentIntents.retrieve(id);
   }
