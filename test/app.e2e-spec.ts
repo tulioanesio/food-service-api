@@ -38,18 +38,18 @@ integration(
       }),
     );
     const createIntent = jest
-      .spyOn(gateway, 'create')
+      .spyOn(gateway, 'createCheckoutSession')
       .mockImplementation((p: Payment) =>
         Promise.resolve({
-          id: `pi_${p.id}`,
-          object: 'payment_intent',
-          amount: p.amount.mul(100).toNumber(),
+          id: `cs_${p.id}`,
+          object: 'checkout.session',
+          url: `https://checkout.stripe.com/c/pay/cs_${p.id}`,
+          payment_intent: `pi_${p.id}`,
+          amount_total: p.amount.mul(100).toNumber(),
           currency: 'brl',
           livemode: false,
-          client_secret: 'test_secret',
           metadata: { paymentId: p.id, orderId: p.orderId },
-          status: 'requires_payment_method',
-        } as Stripe.Response<Stripe.PaymentIntent>),
+        } as unknown as Stripe.Response<Stripe.Checkout.Session>),
       );
     beforeAll(async () => {
       process.env.DATABASE_URL = testUrl;
