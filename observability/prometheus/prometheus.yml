@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'food-service-api'
+    metrics_path: '/api/v1/metrics'
+    static_configs:
+      - targets: ['api:3000']
+        labels:
+          env: 'local'
+
+  # Descomente o bloco abaixo se quiser monitorar tambem a API hospedada no Render:
+  # - job_name: 'food-service-api-render'
+  #   scheme: https
+  #   metrics_path: '/api/v1/metrics'
+  #   scrape_interval: 30s
+  #   static_configs:
+  #     - targets: ['food-service-api-57ia.onrender.com']
+  #       labels:
+  #         env: 'render'
