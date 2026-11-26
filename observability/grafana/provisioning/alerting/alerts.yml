@@ -1,0 +1,139 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: food-service-api-alerts
+    folder: Food Service
+    interval: 1m
+    rules:
+      - uid: api-offline
+        title: API Offline (DOWN)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              expr: up{job=~"food-service-api.*"}
+              refId: A
+          - refId: B
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              type: reduce
+          - refId: C
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [1]
+                    type: lt
+              expression: B
+              type: threshold
+        for: 1m
+        annotations:
+          summary: "Ambiente {{ $labels.env }} está fora do ar"
+        labels:
+          severity: critical
+
+      - uid: high-5xx-rate
+        title: Alta Taxa de Erros 5xx (> 1%)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              expr: 100 * sum(rate(http_requests_total{status_code=~"5.."}[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 0.0001)
+              refId: A
+          - refId: B
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              type: reduce
+          - refId: C
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [1]
+                    type: gt
+              expression: B
+              type: threshold
+        for: 2m
+        annotations:
+          summary: "Taxa de erros 5xx acima de 1%"
+        labels:
+          severity: critical
+
+      - uid: high-4xx-warning
+        title: Pico de Erros 4xx (> 10%)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              expr: 100 * sum(rate(http_requests_total{status_code=~"4.."}[5m])) / clamp_min(sum(rate(http_requests_total[5m])), 0.0001)
+              refId: A
+          - refId: B
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              type: reduce
+          - refId: C
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [10]
+                    type: gt
+              expression: B
+              type: threshold
+        for: 5m
+        annotations:
+          summary: "Taxa de erros 4xx acima de 10% (possível falha de autenticação ou validação)"
+        labels:
+          severity: warning
+
+      - uid: high-latency-p95
+        title: Latência p95 Elevada (> 1000ms)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000
+              refId: A
+          - refId: B
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: __expr__
+            model:
+              expression: A
+              reducer: last
+              type: reduce
+          - refId: C
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: [1000]
+                    type: gt
+              expression: B
+              type: threshold
+        for: 5m
+        annotations:
+          summary: "Latência p95 acima de 1000ms"
+        labels:
+          severity: warning
